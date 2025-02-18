@@ -1,6 +1,6 @@
 # HypoxiaMOA-HUVEC
 
-## Scripts for Analyzing MOA-seq Data in HUVECs under Hypoxia
+Scripts for Analyzing MOA-seq Data in HUVECs under Hypoxia
 
 ### Description
 This repository contains a collection of scripts developed to process MOA-seq data from HUVECs under hypoxic conditions. The pipeline covers initial processing of paired-end reads, CPM normalization, and downstream analyses, including clustering, differential expression, and Gene Set Enrichment Analysis (GSEA). The provided tools allow you to:
