@@ -7,7 +7,7 @@ This repository contains a collection of scripts developed to process MOA-seq da
 - Trim adapters
 - Align reads
 - Generate bedgraphs/bigwigs
-- Perform hierarchical clustering of gene expression data
+- Perform hierarchical clustering of MOA-seq data
 - Run DESeq2 for differential expression
 - Explore enriched gene ontology terms across time points
 
