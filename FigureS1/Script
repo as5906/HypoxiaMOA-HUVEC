@@ -1,0 +1,23 @@
+#!/bin/bash
+
+#Download GSE289863_0h_hpx_idr_allReps.narrowPeak.gz from https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE289863
+FILE_PATH="GSE289863_0h_hpx_idr_allReps.narrowPeak.gz"
+
+gzip -d "$FILE_PATH"
+FILE_PATH="${FILE_PATH%.gz}"
+
+#Download ENCODE cCREs file
+wget https://hgdownload.soe.ucsc.edu/gbdb/hg38/encode3/ccre/encodeCcreCombined.bb
+
+#Utility can be found here - https://hgdownload.soe.ucsc.edu/admin/exe/
+bigBedToBed encodeCcreCombined.bb encodeCcreCombined.bed
+rm encodeCcreCombined.bb
+
+#Peaks that do not overlap cCREs
+bedtools intersect -v -a GSE289863_0h_hpx_idr_allReps.narrowPeak -b encodeCcreCombined.bed > GSE289863_0h_hpx_idr_allReps_noCRE.narrowPeak
+
+#Peaks that do not overlap DHS
+bedtools intersect -v -a GSE289863_0h_hpx_idr_allReps.narrowPeak -b UCSC_ENCODE_HUVEC_PEAKS.bed > GSE289863_0h_hpx_idr_allReps_noDHS.narrowPeak
+
+#Peaks that do not overlap DHS and cCREs
+bedtools intersect -v -a GSE289863_0h_hpx_idr_allReps_noDHS.narrowPeak -b encodeCcreCombined.bed >  GSE289863_0h_hpx_idr_allReps_noCRE_noDHS.narrowPeak
