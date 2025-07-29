@@ -1,0 +1,49 @@
+#!/bin/bash
+
+# Define required file paths for gain/loss peaks
+gain_1h=/home/ss19m/HYPOX/PEAKS/DIFF/MOA1_gain_diff.bed
+gain_3h=/home/ss19m/HYPOX/PEAKS/DIFF/MOA3_gain_diff.bed
+gain_24h=/home/ss19m/HYPOX/PEAKS/DIFF/MOA24_gain_diff.bed
+loss_1h=/home/ss19m/HYPOX/PEAKS/DIFF/MOA1_loss_diff.bed
+loss_3h=/home/ss19m/HYPOX/PEAKS/DIFF/MOA3_loss_diff.bed
+loss_24h=/home/ss19m/HYPOX/PEAKS/DIFF/MOA24_loss_diff.bed
+
+# Define BED files for each timepoint
+Bed_0h=~/HITM/BEDS/MERGE/MOA0_merge_frenter_q20_chr_sort.bed
+Bed_1h=~/HITM/BEDS/MERGE/MOA1_merge_frenter_q20_chr_sort.bed
+Bed_3h=~/HITM/BEDS/MERGE/MOA3_merge_frenter_q20_chr_sort.bed
+Bed_24h=~/HITM/BEDS/MERGE/MOA24_merge_frenter_q20_chr_sort.bed
+
+
+# Concatenate all into one file
+cat "$gain_1h" "$gain_3h" "$gain_24h" "$loss_1h" "$loss_3h" "$loss_24h" > all_diff_peaks.bed
+bedtools sort -i all_diff_peaks.bed > temp
+mv temp all_diff_peaks.bed
+
+bedtools merge -i all_diff_peaks.bed > all_diff_peaks_merge.bed
+awk '{mid = int(($2 + $3) / 2); start = mid - 15; end = mid + 15; if (start < 0) start = 0; print $1, start, end}' OFS='\t' all_diff_peaks_merge.bed > all_diff_peaks_merge_win30.bed
+
+# Run bedtools coverage using the defined BED files
+bedtools coverage -a all_diff_peaks_merge_win30.bed -b "$Bed_0h" > coverage_0h.txt
+bedtools coverage -a all_diff_peaks_merge_win30.bed -b "$Bed_1h" > coverage_1h.txt
+bedtools coverage -a all_diff_peaks_merge_win30.bed -b "$Bed_3h" > coverage_3h.txt
+bedtools coverage -a all_diff_peaks_merge_win30.bed -b "$Bed_24h" > coverage_24h.txt
+
+#CPM Normalization
+awk '{OFS="\t" ; print $1,$2,$3,$4*0.028393227}' coverage_0h.txt > temp
+mv temp coverage_0h.txt
+awk '{OFS="\t" ; print $1,$2,$3,$4*0.02100052331}' coverage_1h.txt > temp
+mv temp coverage_1h.txt
+awk '{OFS="\t" ; print $1,$2,$3,$4*0.01935495584}' coverage_3h.txt > temp
+mv temp coverage_3h.txt
+awk '{OFS="\t" ; print $1,$2,$3,$4*0.01205994235}' coverage_24h.txt > temp
+mv temp coverage_24h.txt
+
+awk '{print $4}' coverage_1h.txt > temp
+awk '{print $4}' coverage_3h.txt > temp2
+awk '{print $4}' coverage_24h.txt > temp3
+
+#Combine to one file
+paste -d "\t" temp temp2 temp3 > temp4
+paste -d "\t" coverage_0h.txt temp4 > df
+rm temp temp2 temp3 temp4
