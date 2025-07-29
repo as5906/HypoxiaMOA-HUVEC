@@ -115,7 +115,7 @@ This pipeline will generate the following barplot PDFs showing peak annotation d
 
 ## 📌 Notes
 
-- The file `UCSC_ENCODE_HUVEC_PEAKS.bed` must be manually downloaded or curated from ENCODE DHS datasets in HUVEC cells.
+- The file `UCSC_ENCODE_HUVEC_PEAKS.bed` is provided in directory.
 - Ensure `bigBedToBed` is executable and available in your `PATH`. Precompiled binaries are available [here](https://hgdownload.soe.ucsc.edu/admin/exe/).
 
 ---
