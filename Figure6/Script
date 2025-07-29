@@ -1,0 +1,108 @@
+#!/bin/bash
+
+###Motif File input for XStreme in MEME Suite
+#Use diff-MOA file outputs from Figure4 script
+#MOA1_gain_diff.bed, MOA1_loss_diff.bed, MOA3_gain_diff.bed, MOA3_loss_diff.bed, MOA24_gain_diff.bed, MOA24_loss_diff.bed
+#The files above can be used for input for MEME suites in their BED format
+
+###To calculate ReMap Percentages
+
+#TCF4 is ITF2
+#NEUROD1 is NDF1
+#POU2F1 is PO2F1
+#ZNF502 is ZN502
+#NFE2L2 is NF2L2
+
+wget https://remap.univ-amu.fr/storage/remap2022/hg38/MACS2/TF/SMAD3/remap2022_SMAD3_nr_macs2_hg38_v1_0.bed.gz
+wget https://remap.univ-amu.fr/storage/remap2022/hg38/MACS2/TF/TCF4/remap2022_TCF4_nr_macs2_hg38_v1_0.bed.gz
+wget https://remap.univ-amu.fr/storage/remap2022/hg38/MACS2/TF/MAFB/remap2022_MAFB_nr_macs2_hg38_v1_0.bed.gz
+wget https://remap.univ-amu.fr/storage/remap2022/hg38/MACS2/TF/ETV4/remap2022_ETV4_nr_macs2_hg38_v1_0.bed.gz
+wget https://remap.univ-amu.fr/storage/remap2022/hg38/MACS2/TF/NFE2L2/remap2022_NFE2L2_nr_macs2_hg38_v1_0.bed.gz
+wget https://remap.univ-amu.fr/storage/remap2022/hg38/MACS2/TF/BACH2/remap2022_BACH2_nr_macs2_hg38_v1_0.bed.gz
+wget https://remap.univ-amu.fr/storage/remap2022/hg38/MACS2/TF/NEUROD1/remap2022_NEUROD1_nr_macs2_hg38_v1_0.bed.gz
+wget https://remap.univ-amu.fr/storage/remap2022/hg38/MACS2/TF/POU2F1/remap2022_POU2F1_nr_macs2_hg38_v1_0.bed.gz
+wget https://remap.univ-amu.fr/storage/remap2022/hg38/MACS2/TF/ZNF502/remap2022_ZNF502_nr_macs2_hg38_v1_0.bed.gz
+wget https://remap.univ-amu.fr/storage/remap2022/hg38/MACS2/TF/TEAD1/remap2022_TEAD1_nr_macs2_hg38_v1_0.bed.gz
+
+gunzip *.gz
+
+# -----------------------------------------------
+# Extract motifs and calculate intersection percentages
+# -----------------------------------------------
+
+# Function to extract motifs and calculate intersection percentage (Note. Rounds down regardless if greater than .5)
+calculate_percentage() {
+  motif_file=$1
+  motif_name=$2
+  remap_file=$3
+
+  # Extract the lines for the motif from the motif file
+  awk -v motif="$motif_name" '$4 == motif' "$motif_file" > "temp_${motif_file}_${motif_name}.bed"
+
+  # Perform the intersection with the remap file
+  bedtools intersect -u -a "temp_${motif_file}_${motif_name}.bed" -b "$remap_file" > "temp_intersect_${motif_file}_${motif_name}.bed"
+
+  # Count the lines in the intersection file
+  intersection_count=$(wc -l < "temp_intersect_${motif_file}_${motif_name}.bed")
+
+  # Count the total lines in the extracted motif file
+  motif_count=$(wc -l < "temp_${motif_file}_${motif_name}.bed")
+
+  # Calculate the percentage and output
+  if [ "$motif_count" -gt 0 ]; then
+    percentage=$(echo "scale=2; ($intersection_count / $motif_count) * 100" | bc)
+    echo "$motif_file with $motif_name intersection percentage: $percentage%"
+  else
+    echo "No motifs found for $motif_name in $motif_file"
+  fi
+
+  # Clean up temporary files
+  rm "temp_${motif_file}_${motif_name}.bed" "temp_intersect_${motif_file}_${motif_name}.bed"
+}
+
+# -----------------------------------------------
+# Start the calculations
+# -----------------------------------------------
+
+# 1hr_gain_motifs.bed with remap2022_SMAD3_nr_macs2_hg38_v1_0.bed
+calculate_percentage "1hr_gain_motifs.bed" "SMAD3" "remap2022_SMAD3_nr_macs2_hg38_v1_0.bed"
+
+# 1hr_gain_motifs.bed with remap2022_TCF4_nr_macs2_hg38_v1_0.bed
+calculate_percentage "1hr_gain_motifs.bed" "ITF2" "remap2022_TCF4_nr_macs2_hg38_v1_0.bed"
+
+# 1hr_gain_motifs.bed with remap2022_MAFB_nr_macs2_hg38_v1_0.bed
+calculate_percentage "1hr_gain_motifs.bed" "MAFB" "remap2022_MAFB_nr_macs2_hg38_v1_0.bed"
+
+# 3hr_gain_motifs.bed with remap2022_ETV4_nr_macs2_hg38_v1_0.bed
+calculate_percentage "3hr_gain_motifs.bed" "ETV4" "remap2022_ETV4_nr_macs2_hg38_v1_0.bed"
+
+# 3hr_gain_motifs.bed with remap2022_MAFB_nr_macs2_hg38_v1_0.bed
+calculate_percentage "3hr_gain_motifs.bed" "MAFB" "remap2022_MAFB_nr_macs2_hg38_v1_0.bed"
+
+# 24hr_gain_motifs.bed with remap2022_TCF4_nr_macs2_hg38_v1_0.bed
+calculate_percentage "24hr_gain_motifs.bed" "ITF2" "remap2022_TCF4_nr_macs2_hg38_v1_0.bed"
+
+# 24hr_gain_motifs.bed with remap2022_NFE2L2_nr_macs2_hg38_v1_0.bed
+calculate_percentage "24hr_gain_motifs.bed" "NF2L2" "remap2022_NFE2L2_nr_macs2_hg38_v1_0.bed"
+
+# 1hr_loss_motifs.bed with remap2022_SMAD3_nr_macs2_hg38_v1_0.bed
+calculate_percentage "1hr_loss_motifs.bed" "SMAD3" "remap2022_SMAD3_nr_macs2_hg38_v1_0.bed"
+
+# 1hr_loss_motifs.bed with remap2022_BACH2_nr_macs2_hg38_v1_0.bed
+calculate_percentage "1hr_loss_motifs.bed" "BACH2" "remap2022_BACH2_nr_macs2_hg38_v1_0.bed"
+
+# 1hr_loss_motifs.bed with remap2022_MAFB_nr_macs2_hg38_v1_0.bed
+calculate_percentage "1hr_loss_motifs.bed" "MAFB" "remap2022_MAFB_nr_macs2_hg38_v1_0.bed"
+
+# 3hr_loss_motifs.bed with remap2022_NEUROD1_nr_macs2_hg38_v1_0.bed
+calculate_percentage "3hr_loss_motifs.bed" "NDF1" "remap2022_NEUROD1_nr_macs2_hg38_v1_0.bed"
+
+# 24hr_loss_motifs.bed with remap2022_POU2F1_nr_macs2_hg38_v1_0.bed
+calculate_percentage "24hr_loss_motifs.bed" "PO2F1" "remap2022_POU2F1_nr_macs2_hg38_v1_0.bed"
+
+# 24hr_loss_motifs.bed with remap2022_ZNF502_nr_macs2_hg38_v1_0.bed
+calculate_percentage "24hr_loss_motifs.bed" "ZN502" "remap2022_ZNF502_nr_macs2_hg38_v1_0.bed"
+
+# 24hr_loss_motifs.bed with remap2022_TEAD1_nr_macs2_hg38_v1_0.bed
+calculate_percentage "24hr_loss_motifs.bed" "TEAD1" "remap2022_TEAD1_nr_macs2_hg38_v1_0.bed"
+
