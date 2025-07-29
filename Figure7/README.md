@@ -3,6 +3,31 @@
 This folder contains the full pipeline to process differential MOA-seq peaks across hypoxia timepoints (1h, 3h, 24h), generate normalized coverage matrices, perform clustering, and run GSEA on each resulting cluster using gene-level differential expression statistics.
 
 ---
+## Dependencies, Tools, and Libraries
+🛠️ Command-Line Tools
+BEDTools (v2.29 or later):
+Required for merging peak files and computing coverage.
+https://bedtools.readthedocs.io
+
+awk, cat, paste, sort (Unix shell utilities):
+Used for data manipulation and matrix assembly.
+
+📦 R Libraries
+Make sure R (v4.0 or later) is installed along with the following packages:
+
+ggplot2 – for generating cluster profile plots
+
+preprocessCore – for quantile normalization (if added)
+
+tidyr and dplyr – for data reshaping and manipulation
+
+clusterProfiler – for Gene Set Enrichment Analysis (GSEA)
+
+enrichplot – for visualizing enrichment results
+
+org.Hs.eg.db – human gene annotation database
+
+svglite – for exporting plots to .svg
 
 ## 📁 Required Inputs
 
@@ -18,7 +43,7 @@ This folder contains the full pipeline to process differential MOA-seq peaks acr
 
 ---
 
-## 🏗️ Step 1: Build Merged Differential Peak Set
+## 🏗️ Step 1: Build Merged Differential Peak Set - Using "Script" File
 
 ```bash
 # Define required file paths for gain/loss peaks
@@ -83,7 +108,7 @@ Alternatively, use `compiled_diffMOA_cpm_byHour.txt` for direct input to cluster
 
 ---
 
-## 🌐 Run Clustering in R
+## 🌐 Run Clustering in R - Using "Hierarchical_norm.R"
 
 ```r
 # Hierarchical_norm.R
@@ -139,7 +164,7 @@ ggsave(output_file, plot = combined_plot, device = "svg")
 
 ---
 
-## 🧬 GSEA for Cluster DEG Lists
+## 🧬 GSEA for Cluster DEG Lists - Using "GSEA.R" File in GSEA Directory where the Log2FC files also are
 
 Use `GSEA.r` script with the following structure for each cluster/timepoint log2FC file:
 
