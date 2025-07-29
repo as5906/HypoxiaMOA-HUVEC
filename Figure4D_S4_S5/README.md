@@ -1,4 +1,4 @@
-# README
+# ENCODE cCRE Intersection with Differential MOA-seq Peaks
 
 ## Overview
 
