@@ -1,4 +1,4 @@
-# Figure 6: Motif Intersection Analysis with ReMap ChIP-seq
+# Motif Intersection Analysis with ReMap ChIP-seq
 
 This directory contains BED files representing gain and loss motif regions from MOA-seq footprints across hypoxia time points (1h, 3h, 24h), along with a bash script used to calculate overlap percentages with ReMap 2022 transcription factor binding sites.
 
@@ -19,7 +19,7 @@ These files were generated as part of the motif analysis workflow and are compat
 
 ---
 
-### Script: `remap_overlap_analysis.sh`
+### Script:
 
 This script automates the download of selected ReMap 2022 ChIP-seq peak files for human TFs, decompresses them, and computes the percentage of motif sites (from the above BED files) that overlap with each TF binding site dataset using `bedtools`.
 
@@ -39,25 +39,22 @@ This script automates the download of selected ReMap 2022 ChIP-seq peak files fo
 #### Usage
 
 ```bash
-bash remap_overlap_analysis.sh
-Dependencies:
+./Script
 
-wget
+#### Dependencies
 
-gunzip
+- wget
+- gunzip
+- bedtools
+- awk, wc, bc
 
-bedtools
+#### Example Output
 
-awk, wc, bc
-
-Example Output
-text
-Copy
-Edit
 1hr_gain_motifs.bed with SMAD3 intersection percentage: 22.17%
 1hr_gain_motifs.bed with ITF2 intersection percentage: 15.04%
 ...
 
 #### Notes
-This analysis complements Figure 6 of the manuscript by quantifying the consistency between predicted motifs and experimentally validated TF binding sites.
-BED files can also be used for input into motif enrichment or clustering tools for further regulatory characterization.
+- This analysis complements Figure 6 of the manuscript by quantifying the consistency between predicted motifs and experimentally validated TF binding sites.
+- BED files can also be used for input into motif enrichment or clustering tools for further regulatory characterization.
+
