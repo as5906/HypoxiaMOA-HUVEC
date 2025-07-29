@@ -1,0 +1,98 @@
+#!/bin/bash
+
+#Define required file paths
+gain_1h=/home/ss19m/HYPOX/PEAKS/DIFF/MOA1_gain_diff.bed
+gain_3h=/home/ss19m/HYPOX/PEAKS/DIFF/MOA3_gain_diff.bed
+gain_24h=/home/ss19m/HYPOX/PEAKS/DIFF/MOA24_gain_diff.bed
+loss_1h=/home/ss19m/HYPOX/PEAKS/DIFF/MOA1_loss_diff.bed
+loss_3h=/home/ss19m/HYPOX/PEAKS/DIFF/MOA3_loss_diff.bed
+loss_24h=/home/ss19m/HYPOX/PEAKS/DIFF/MOA24_loss_diff.bed
+
+###Figure 5A
+wget https://ftp.ebi.ac.uk/pub/databases/gencode/Gencode_human/release_45/gencode.v45.basic.annotation.gff3.gz
+gzip -d gencode.v45.basic.annotation.gff3.gz
+sed -i '1,7d' gencode.v45.basic.annotation.gff3
+
+awk -F";" '{OFS="\t" ; print $1,$2,$3,$4,$5,$6,$7,$8,$9,$10}' gencode.v45.basic.annotation.gff3 > temp
+awk '{OFS="\t" ; if($3=="gene") print $1,$4-200,$5+200,$12,$11}' temp > temp2
+sed -i 's/gene_name=//g' temp2
+sed -i 's/gene_type=//g' temp2
+#Gene coordinates of protein-coding genes including gene body, 200 bp upstream of TSS, 200 bp downstream of TES
+awk '{OFS="\t" ; if($5=="protein_coding") print $1,$2,$3,$4}' temp2 > gencodev45.pc.200.bed
+rm temp temp2
+
+bedtools intersect -u -a gencodev45.pc.200.bed -b "$gain_1h" > temp
+awk '{print $4}' temp > MOA1_gain_GENES.txt
+
+bedtools intersect -u -a gencodev45.pc.200.bed -b "$loss_1h" > temp
+awk '{print $4}' temp > MOA1_loss_GENES.txt
+
+cat "$gain_1h" "$loss_1h" > MOA1_diff.bed
+#1hr gene list input for ENRICHR
+bedtools intersect -u -a gencodev45.pc.200.bed -b MOA1_diff.bed  > MOA1_diff_GENES.bed
+
+
+bedtools intersect -u -a gencodev45.pc.200.bed -b "$gain_3h" > temp
+awk '{print $4}' temp > MOA3_gain_GENES.txt
+
+bedtools intersect -u -a gencodev45.pc.200.bed -b "$loss_3h" > temp
+awk '{print $4}' temp > MOA3_loss_GENES.txt
+
+cat "$gain_3h" "$loss_3h" > MOA3_diff.bed
+#3hr gene list input for ENRICHR
+bedtools intersect -u -a gencodev45.pc.200.bed -b MOA3_diff.bed  > MOA3_diff_GENES.bed
+
+
+bedtools intersect -u -a gencodev45.pc.200.bed -b "$gain_24h" > temp
+awk '{print $4}' temp > MOA24_gain_GENES.txt
+
+bedtools intersect -u -a gencodev45.pc.200.bed -b "$loss_24h" > temp
+awk '{print $4}' temp > MOA24_loss_GENES.txt
+
+cat "$gain_24h" "$loss_24h" > MOA24_diff.bed
+#24hr gene list input for ENRICHR
+bedtools intersect -u -a gencodev45.pc.200.bed -b MOA24_diff.bed  > MOA24_diff_GENES.bed
+
+###Figure5B
+#Xhr_MOA_DEG.txt may have a higher gene count than what is reported in Figure5C. This is because not all genes are recognized in ENRICHR and we reported the gene list size that was used for pathway enrichment.
+
+#Reports total number of DEGs with gain, loss, or both.
+./Count.sh 1h_DEG_q05.txt MOA1_gain_GENES.txt MOA1_loss_GENES.txt
+mv out 1hr_MOA_DEG.txt
+echo "1hr"
+echo "Gain count: $(grep -c 'gain' 1hr_MOA_DEG.txt)"
+echo "Loss count: $(grep -c 'loss' 1hr_MOA_DEG.txt)"
+echo "Gain and Loss count: $(grep -c 'gain,loss' 1hr_MOA_DEG.txt)"
+awk '$4 ~ /gain|loss|gain,loss/ {print $1}' 1hr_MOA_DEG.txt > 1hr_MOA_DEG_subset.txt
+
+
+./Count.sh 3h_DEG_q05.txt MOA3_gain_GENES.txt MOA3_loss_GENES.txt
+mv out 3hr_MOA_DEG.txt
+echo "3hr"
+echo "Gain count: $(grep -c 'gain' 3hr_MOA_DEG.txt)"
+echo "Loss count: $(grep -c 'loss' 3hr_MOA_DEG.txt)"
+echo "Gain and Loss count: $(grep -c 'gain,loss' 3hr_MOA_DEG.txt)"
+awk '$4 ~ /gain|loss|gain,loss/ {print $1}' 3hr_MOA_DEG.txt > 3hr_MOA_DEG_subset.txt
+
+./Count.sh 24h_DEG_q05.txt MOA24_gain_GENES.txt MOA24_loss_GENES.txt
+mv out 24hr_MOA_DEG.txt
+echo "24hr"
+echo "Gain count: $(grep -c 'gain' 24hr_MOA_DEG.txt)"
+echo "Loss count: $(grep -c 'loss' 24hr_MOA_DEG.txt)"
+echo "Gain and Loss count: $(grep -c 'gain,loss' 24hr_MOA_DEG.txt)"
+awk '$4 ~ /gain|loss|gain,loss/ {print $1}' 24hr_MOA_DEG.txt > 24hr_MOA_DEG_subset.txt
+
+###Figure5C
+#Create randomized size matched DEG gene lists to compare MOA-DEG subset vs any randomzied group of DEGs for respective hour. These gene lists and inputs for ENRICHR. Adjusted p-values from each are averaged and reported in Figure5C.
+
+awk '{print $1}' 1hr_MOA_DEG.txt | shuf -n 58 > 1h_MOA_DEG_rand_subset1.txt
+awk '{print $1}' 1hr_MOA_DEG.txt | shuf -n 58 > 1h_MOA_DEG_rand_subset2.txt
+awk '{print $1}' 1hr_MOA_DEG.txt | shuf -n 58 > 1h_MOA_DEG_rand_subset3.txt
+
+awk '{print $1}' 3hr_MOA_DEG.txt | shuf -n 101 > 3h_MOA_DEG_rand_subset1.txt
+awk '{print $1}' 3hr_MOA_DEG.txt | shuf -n 101 > 3h_MOA_DEG_rand_subset2.txt
+awk '{print $1}' 3hr_MOA_DEG.txt | shuf -n 101 > 3h_MOA_DEG_rand_subset3.txt
+
+awk '{print $1}' 24hr_MOA_DEG.txt | shuf -n 217 > 24h_MOA_DEG_rand_subset1.txt
+awk '{print $1}' 24hr_MOA_DEG.txt | shuf -n 217 > 24h_MOA_DEG_rand_subset2.txt
+awk '{print $1}' 24hr_MOA_DEG.txt | shuf -n 217 > 24h_MOA_DEG_rand_subset3.txt
