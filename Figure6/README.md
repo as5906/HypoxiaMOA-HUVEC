@@ -40,6 +40,7 @@ This script automates the download of selected ReMap 2022 ChIP-seq peak files fo
 
 ```bash
 ./Script
+```
 
 #### Dependencies
 
