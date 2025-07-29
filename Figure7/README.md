@@ -4,30 +4,19 @@ This folder contains the full pipeline to process differential MOA-seq peaks acr
 
 ---
 ## Dependencies, Tools, and Libraries
-🛠️ Command-Line Tools
-BEDTools (v2.29 or later):
-Required for merging peak files and computing coverage.
-https://bedtools.readthedocs.io
-
-awk, cat, paste, sort (Unix shell utilities):
-Used for data manipulation and matrix assembly.
+Command-Line Tools
+- BEDTools (v2.29 or later): Required for merging peak files and computing coverage. https://bedtools.readthedocs.io/
+- awk, cat, paste, sort (Unix shell utilities): Used for data manipulation and matrix assembly.
 
 📦 R Libraries
-Make sure R (v4.0 or later) is installed along with the following packages:
-
-ggplot2 – for generating cluster profile plots
-
-preprocessCore – for quantile normalization (if added)
-
-tidyr and dplyr – for data reshaping and manipulation
-
-clusterProfiler – for Gene Set Enrichment Analysis (GSEA)
-
-enrichplot – for visualizing enrichment results
-
-org.Hs.eg.db – human gene annotation database
-
-svglite – for exporting plots to .svg
+- Make sure R (v4.0 or later) is installed along with the following packages:
+- ggplot2: for generating cluster profile plots
+- preprocessCore: for quantile normalization (if added)
+- tidyr and dplyr: for data reshaping and manipulation
+- clusterProfiler: for Gene Set Enrichment Analysis (GSEA)
+- enrichplot: for visualizing enrichment results
+- org.Hs.eg.db: human gene annotation database
+- svglite: for exporting plots to .svg
 
 ## 📁 Required Inputs
 
