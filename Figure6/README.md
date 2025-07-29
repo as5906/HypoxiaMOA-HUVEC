@@ -36,26 +36,27 @@ This script automates the download of selected ReMap 2022 ChIP-seq peak files fo
 - Outputs the percentage of intersecting sites per motif per timepoint
 - Temporary files are cleaned up after execution
 
-#### Usage
+#### Usage:
 
 ```bash
 ./Script
 ```
 
-#### Dependencies
+#### Dependencies:
 
 - wget
 - gunzip
 - bedtools
 - awk, wc, bc
 
-#### Example Output
+#### Example Output:
 
 1hr_gain_motifs.bed with SMAD3 intersection percentage: 22.17%
 1hr_gain_motifs.bed with ITF2 intersection percentage: 15.04%
 ...
 
-#### Notes
+#### Notes:
+
 - This analysis complements Figure 6 of the manuscript by quantifying the consistency between predicted motifs and experimentally validated TF binding sites.
 - BED files can also be used for input into motif enrichment or clustering tools for further regulatory characterization.
 
