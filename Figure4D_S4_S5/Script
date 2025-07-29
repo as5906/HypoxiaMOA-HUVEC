@@ -1,0 +1,111 @@
+#!/bin/bash
+  
+# Download the file from UCSC
+wget https://hgdownload.soe.ucsc.edu/gbdb/hg38/encode3/ccre/encodeCcreCombined.bb
+
+# Utility can be found here - https://hgdownload.soe.ucsc.edu/admin/exe/
+# Convert the BigBed file to BED format
+bigBedToBed encodeCcreCombined.bb encodeCcreCombined.bed
+
+# Create separate BED files based on the 11th column in the original BED file
+awk '{OFS="\t" ; if($11=="dELS") print $1,$2,$3,"dELS"}' encodeCcreCombined.bed > encodeCcre_dELS.bed
+awk '{OFS="\t" ; if($11=="pELS") print $1,$2,$3,"pELS"}' encodeCcreCombined.bed > encodeCcre_pELS.bed
+awk '{OFS="\t" ; if($11=="PLS") print $1,$2,$3,"PLS"}' encodeCcreCombined.bed > encodeCcre_PLS.bed
+awk '{OFS="\t" ; if($11=="CTCF-only") print $1,$2,$3,"CTCF"}' encodeCcreCombined.bed > encodeCcre_CTCF.bed
+awk '{OFS="\t" ; if($11=="DNase-H3K4me3") print $1,$2,$3,"K4m3"}' encodeCcreCombined.bed > encodeCcre_K4m3.bed
+
+# Loop through each of the encodeCcre BED files
+for file in encodeCcre_*.bed; do
+        
+    # MOA1 Gain
+    echo "  Intersecting with MOA1_gain_diff.bed"
+    bedtools intersect -u -a MOA1_gain_diff.bed -b "$file" > temp
+    count_peak=$(wc -l temp | awk '{print $1}')
+    bedtools intersect -a MOA1_gain_diff.bed -b "$file" > temp
+    bp_count=$(awk '{print $3 - $2}' temp | awk '{s+=$1} END {print s}')
+    echo "$file MOA1_gain_diff.bed $bp_count" >> bp_intersection_counts.txt
+    echo "$file MOA1_gain_diff.bed $count_peak" >> peak_intersection_counts.txt
+
+    # MOA3 Gain
+    echo "  Intersecting with MOA3_gain_diff.bed"
+    bedtools intersect -u -a MOA3_gain_diff.bed -b "$file" > temp
+    count_peak=$(wc -l temp | awk '{print $1}')
+    bedtools intersect -a MOA3_gain_diff.bed -b "$file" > temp
+    bp_count=$(awk '{print $3 - $2}' temp | awk '{s+=$1} END {print s}')
+    echo "$file MOA3_gain_diff.bed $bp_count" >> bp_intersection_counts.txt
+    echo "$file MOA3_gain_diff.bed $count_peak" >> peak_intersection_counts.txt
+
+    # MOA24 Gain
+    echo "  Intersecting with MOA24_gain_diff.bed"
+    bedtools intersect -u -a MOA24_gain_diff.bed -b "$file" > temp
+    count_peak=$(wc -l temp | awk '{print $1}')
+    bedtools intersect -a MOA24_gain_diff.bed -b "$file" > temp
+    bp_count=$(awk '{print $3 - $2}' temp | awk '{s+=$1} END {print s}')
+    echo "$file MOA24_gain_diff.bed $bp_count" >> bp_intersection_counts.txt
+    echo "$file MOA24_gain_diff.bed $count_peak" >> peak_intersection_counts.txt
+
+    # MOA1 Loss
+    echo "  Intersecting with MOA1_loss_diff.bed"
+    bedtools intersect -u -a MOA1_loss_diff.bed -b "$file" > temp
+    count_peak=$(wc -l temp | awk '{print $1}')
+    bedtools intersect -a MOA1_loss_diff.bed -b "$file" > temp
+    bp_count=$(awk '{print $3 - $2}' temp | awk '{s+=$1} END {print s}')
+    echo "$file MOA1_loss_diff.bed $bp_count" >> bp_intersection_counts.txt
+    echo "$file MOA1_loss_diff.bed $count_peak" >> peak_intersection_counts.txt
+
+    # MOA3 Loss
+    echo "  Intersecting with MOA3_loss_diff.bed"
+    bedtools intersect -u -a MOA3_loss_diff.bed -b "$file" > temp
+    count_peak=$(wc -l temp | awk '{print $1}')
+    bedtools intersect -a MOA3_loss_diff.bed -b "$file" > temp
+    bp_count=$(awk '{print $3 - $2}' temp | awk '{s+=$1} END {print s}')
+    echo "$file MOA3_loss_diff.bed $bp_count" >> bp_intersection_counts.txt
+    echo "$file MOA3_loss_diff.bed $count_peak" >> peak_intersection_counts.txt
+
+    # MOA24 Loss
+    echo "  Intersecting with MOA24_loss_diff.bed"
+    bedtools intersect -u -a MOA24_loss_diff.bed -b "$file" > temp
+    count_peak=$(wc -l temp | awk '{print $1}')
+    bedtools intersect -a MOA24_loss_diff.bed -b "$file" > temp
+    bp_count=$(awk '{print $3 - $2}' temp | awk '{s+=$1} END {print s}')
+    echo "$file MOA24_loss_diff.bed $bp_count" >> bp_intersection_counts.txt
+    echo "$file MOA24_loss_diff.bed $count_peak" >> peak_intersection_counts.txt
+
+     # MOA1 Shared
+    echo "  Intersecting with MOA1_shared_diff.bed"
+    bedtools intersect -u -a MOA1_shared_diff.bed -b "$file" > temp
+    count_peak=$(wc -l temp | awk '{print $1}')
+    bedtools intersect -a MOA1_shared_diff.bed -b "$file" > temp
+    bp_count=$(awk '{print $3 - $2}' temp | awk '{s+=$1} END {print s}')
+    echo "$file MOA1_shared_diff.bed $bp_count" >> bp_intersection_counts.txt
+    echo "$file MOA1_shared_diff.bed $count_peak" >> peak_intersection_counts.txt
+
+    # MOA3 Shared
+    echo "  Intersecting with MOA3_shared_diff.bed"
+    bedtools intersect -u -a MOA3_shared_diff.bed -b "$file" > temp
+    count_peak=$(wc -l temp | awk '{print $1}')
+    bedtools intersect -a MOA3_shared_diff.bed -b "$file" > temp
+    bp_count=$(awk '{print $3 - $2}' temp | awk '{s+=$1} END {print s}')
+    echo "$file MOA3_shared_diff.bed $bp_count" >> bp_intersection_counts.txt
+    echo "$file MOA3_shared_diff.bed $count_peak" >> peak_intersection_counts.txt
+
+    # MOA24 Shared
+    echo "  Intersecting with MOA24_shared_diff.bed"
+    bedtools intersect -u -a MOA24_shared_diff.bed -b "$file" > temp
+    count_peak=$(wc -l temp | awk '{print $1}')
+    bedtools intersect -a MOA24_shared_diff.bed -b "$file" > temp
+    bp_count=$(awk '{print $3 - $2}' temp | awk '{s+=$1} END {print s}')
+    echo "$file MOA24_shared_diff.bed $bp_count" >> bp_intersection_counts.txt
+    echo "$file MOA24_shared_diff.bed $count_peak" >> peak_intersection_counts.txt
+
+    # MOA0 IDR Within Sample
+    echo "  Intersecting with MOA0_P001_IDR_Nt_all_brr_crr.bed"
+    bedtools intersect -u -a MOA0_P001_IDR_Nt_all_brr_crr.bed -b "$file" > temp
+    count_peak=$(wc -l temp | awk '{print $1}')
+    bedtools intersect -a MOA0_P001_IDR_Nt_all_brr_crr.bed -b "$file" > temp
+    bp_count=$(awk '{print $3 - $2}' temp | awk '{s+=$1} END {print s}')
+    echo "$file MOA0_P001_IDR_Nt_all_brr_crr.bed $bp_count" >> bp_intersection_counts.txt
+    echo "$file MOA0_P001_IDR_Nt_all_brr_crr.bed $count_peak" >> peak_intersection_counts.txt
+
+done
+
