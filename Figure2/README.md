@@ -1,4 +1,4 @@
-# Figure 2: Chromatin Accessibility and cCRE Enrichment Analysis
+# MOA-seq Enrichment - TSS, Chromatin Accessibility, and cCRE Enrichment Analysis
 
 This directory contains input files, scripts, and output files used to generate Figure 2, which illustrates MOA-seq signal distribution across transcription start sites (TSS), ENCODE cCREs, and DNase I hypersensitive sites (DHSs) across multiple cell types.
 
@@ -20,14 +20,7 @@ This analysis includes:
 ### Input Files
 
 - `TSS_Q1/`, `TSS_Q2/`, `TSS_Q3/`, `TSS_Q4/`  
-  BED files with ±200 bp windows centered on TSS for genes binned by RNA-seq expression quartiles.
-
-- `dELS/`, `pELS/`, `K4m3/`, `CTCF/`  
-  BED files from ENCODE SCREEN cCREs representing:
-  - distal enhancer-like signatures (dELS)
-  - proximal enhancer-like signatures (pELS)
-  - H3K4me3-enriched promoters (K4m3)
-  - CTCF-bound regions
+  These directories contain genes binned by RNA-seq expression quartiles.
 
 - `UCSC_ENCODE_GM12878_PEAKS.bed`  
   `UCSC_ENCODE_HUVEC_PEAKS.bed`  
@@ -117,10 +110,3 @@ Note: See inline comments in the script for argument formatting and file require
 - `deepTools` (optional for heatmap/profile plots)
 
 ---
-
-## Notes
-
-- BED files are in hg38 coordinate system  
-- Gene expression quartiles were defined using log2(TPM+1) values  
-- Ensure all BED files are sorted using `bedtools sort` and reference genome with `hg38.chrom.sizes`  
-- Null distributions for `dist.py` are generated using at least 1000 random samples from `bedtools shuffle` with `-noOverlapping` and `-chrom`
