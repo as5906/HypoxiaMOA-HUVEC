@@ -1,4 +1,4 @@
-# Figure 3 – TF Coverage and Heatmap Analysis
+# TF Coverage and Heatmap Analysis
 
 ## Overview
 
