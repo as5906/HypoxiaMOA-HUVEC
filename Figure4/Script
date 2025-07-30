@@ -1,0 +1,111 @@
+#!/bin/bash
+
+#Define required file paths
+Bed_0h=~/HITM/BEDS/MERGE/MOA0_merge_frenter_q20_chr_sort.bed
+Bed_1h=~/HITM/BEDS/MERGE/MOA1_merge_frenter_q20_chr_sort.bed
+Bed_3h=~/HITM/BEDS/MERGE/MOA3_merge_frenter_q20_chr_sort.bed
+Bed_24h=~/HITM/BEDS/MERGE/MOA24_merge_frenter_q20_chr_sort.bed
+
+###Figure4A
+
+macs3 callpeak -B -t $Bed_0h --nomodel --extsize 20 -n 0hr 
+
+cp 0hr_control_lambda.bdg 0hr_treat_pileup.bdg 1h
+cp 0hr_control_lambda.bdg 0hr_treat_pileup.bdg 3h
+cp 0hr_control_lambda.bdg 0hr_treat_pileup.bdg 24h
+
+cd 1h
+macs3 callpeak -B -t $Bed_1h --nomodel --extsize 20 -n 1hr
+macs3 bdgdiff --t1 1hr_treat_pileup.bdg --c1 1hr_control_lambda.bdg --t2 0hr_treat_pileup.bdg --c2 0hr_control_lambda.bdg --d1 47617861 --d2 35219667 -g 20 -l 20 -C 2 --o-prefix diff_c1_vs_c2
+mv diff_c1_vs_c2_c2.0_cond1.bed MOA1_gain_diff.bed
+mv diff_c1_vs_c2_c2.0_cond2.bed MOA1_loss_diff.bed
+mv diff_c1_vs_c2_c2.0_common.bed MOA1_shared_diff.bed
+cd ..
+
+cd 3h
+macs3 callpeak -B -t $Bed_3h --nomodel --extsize 20 -n 3hr
+macs3 bdgdiff --t1 3hr_treat_pileup.bdg --c1 3hr_control_lambda.bdg --t2 0hr_treat_pileup.bdg --c2 0hr_control_lambda.bdg --d1 51666354 --d2 35219667 -g 20 -l 20 -C 1.7 --o-prefix diff_c1_vs_c2
+mv diff_c1_vs_c2_c2.0_cond1.bed MOA3_gain_diff.bed
+
+macs3 bdgdiff --t1 3hr_treat_pileup.bdg --c1 3hr_control_lambda.bdg --t2 0hr_treat_pileup.bdg --c2 0hr_control_lambda.bdg --d1 51666354 --d2 35219667 -g 20 -l 20 -C 2 --o-prefix diff_c1_vs_c2
+mv diff_c1_vs_c2_c2.0_cond2.bed MOA3_loss_diff.bed
+mv diff_c1_vs_c2_c2.0_common.bed MOA3_shared_diff.bed
+rm diff_c1_vs_c2_c2.0_cond1.bed
+cd ..
+
+cd 24h
+macs3 callpeak -B -t $Bed_24h --nomodel --extsize 20 -n 24hr
+
+macs3 bdgdiff --t1 24hr_treat_pileup.bdg --c1 24hr_control_lambda.bdg --t2 0hr_treat_pileup.bdg --c2 0hr_control_lambda.bdg --d1 82919136 --d2 35219667 -g 20 -l 20 -C 1.6 --o-prefix diff_c1_vs_c2
+mv diff_c1_vs_c2_c2.0_cond1.bed MOA24_gain_diff.bed
+
+macs3 bdgdiff --t1 24hr_treat_pileup.bdg --c1 24hr_control_lambda.bdg --t2 0hr_treat_pileup.bdg --c2 0hr_control_lambda.bdg --d1 82919136 --d2 35219667 -g 20 -l 20 -C 2 --o-prefix diff_c1_vs_c2
+mv diff_c1_vs_c2_c2.0_cond2.bed MOA24_loss_diff.bed
+mv diff_c1_vs_c2_c2.0_common.bed MOA24_shared_diff.bed
+rm diff_c1_vs_c2_c2.0_cond1.bed
+cd ..
+
+###FigureS3
+#Sort file based on score in 5th column to reflect areas where normoxia (loss) and hypoxia (gain) coverage is greatest
+cd 1h
+sort -k5,5nr MOA1_loss_diff.bed -o MOA1_loss_diff.bed
+sort -k5,5nr MOA1_gain_diff.bed -o MOA1_gain_diff.bed
+cd ..
+cd 3h
+sort -k5,5nr MOA3_loss_diff.bed -o MOA3_loss_diff.bed
+sort -k5,5nr MOA1_gain_diff.bed -o MOA1_gain_diff.bed
+cd ..
+cd 24h
+sort -k5,5nr MOA24_loss_diff.bed -o MOA24_loss_diff.bed
+sort -k5,5nr MOA24_gain_diff.bed -o MOA24_gain_diff.bed
+cd ..
+
+#Sort order will be retained in heatmap output 
+cd 1h
+computeMatrix reference-point --referencePoint center -b 500 -a 500 -R MOA1_gain_diff.bed MOA1_loss_diff.bed -S "$Bed_1h" "$Bed_0h" --skipZeros --missingDataAsZero --sortRegions keep -o 1hr_matrix.gz
+
+plotHeatmap -m 1hr_matrix.gz --sortRegions no --colorMap Greens Greys --legendLocation none -out 1.svg
+cd ..
+cd 3h
+computeMatrix reference-point --referencePoint center -b 500 -a 500 -R MOA3_gain_diff.bed MOA3_loss_diff.bed -S "$Bed_3h" "$Bed_0h" --skipZeros --missingDataAsZero --sortRegions keep -o 3hr_matrix.gz
+
+plotHeatmap -m 3hr_matrix.gz --sortRegions no --colorMap Blues Greys --legendLocation none -out 3.svg
+cd ..
+cd 24h
+computeMatrix reference-point --referencePoint center -b 500 -a 500 -R MOA24_gain_diff.bed MOA24_loss_diff.bed -S "$Bed_24h" "$Bed_0h" --skipZeros --missingDataAsZero --sortRegions keep -o 24hr_matrix.gz
+
+plotHeatmap -m 24hr_matrix.gz --sortRegions no --colorMap Oranges Greys --legendLocation none -out 24.svg
+cd ..
+###Figure4B
+wget https://ftp.ebi.ac.uk/pub/databases/gencode/Gencode_human/release_45/gencode.v45.basic.annotation.gff3.gz
+gzip -d gencode.v45.basic.annotation.gff3.gz
+sed -i '1,7d' gencode.v45.basic.annotation.gff3
+
+awk -F";" '{OFS="\t" ; print $1,$2,$3,$4,$5,$6,$7,$8,$9,$10}' gencode.v45.basic.annotation.gff3 > temp
+awk '{OFS="\t" ; if($3=="gene") print $1,$4-200,$5+200,$12,$11}' temp > temp2
+sed -i 's/gene_name=//g' temp2
+sed -i 's/gene_type=//g' temp2
+awk '{OFS="\t" ; if($5=="protein_coding") print $1,$2,$3,$4}' temp2 > gencodev45.pc.200.bed 
+rm temp temp2
+
+
+wget https://hgdownload.soe.ucsc.edu/gbdb/hg38/encode3/ccre/encodeCcreCombined.bb
+#Utility can be found here - https://hgdownload.soe.ucsc.edu/admin/exe/
+bigBedToBed encodeCcreCombined.bb encodeCcreCombined.bed
+rm encodeCcreCombined.bb
+
+cat 1h/MOA1_gain_diff.bed 1h/MOA1_loss_diff.bed 3h/MOA3_gain_diff.bed 3h/MOA3_loss_diff.bed 24h/MOA24_gain_diff.bed 24h/MOA24_loss_diff.bed > temp
+bedtools sort -i temp > temp2
+bedtools merge -i temp2 > MOA_Alldiff_merged.bed
+rm temp temp2
+
+bedtools intersect -u -a MOA_Alldiff_merged.bed -b encodeCcreCombined.bed > AlldiffMOA_ccre.bed
+bedtools intersect -v -a MOA_Alldiff_merged.bed -b encodeCcreCombined.bed > AlldiffMOA_nonccre.bed
+
+#Number of genes in output is 1350 but one of these genes was not recognized by ENRICHR and was excluded
+bedtools intersect -u -a gencodev45.pc.200.bed -b AlldiffMOA_ccre.bed > AlldiffMOA_ccre_GENES.bed
+
+#Number of genes in output is 1554 but one of these genes was not recognized by ENRICHR and was excluded
+bedtools intersect -u -a gencodev45.pc.200.bed -b AlldiffMOA_nonccre.bed > AlldiffMOA_nonccre_GENES.bed
+
+###Figure4C - Gene lists above were submitted to ENRICHR at https://maayanlab.cloud/Enrichr/
