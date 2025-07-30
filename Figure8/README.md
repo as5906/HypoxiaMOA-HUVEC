@@ -1,4 +1,4 @@
-# 🧬 Figure 8 – Integration of HIF1A ChIP-seq with MOA-seq Dynamics and Motif Enrichment
+# 🧬 Integration of HIF1A ChIP-seq with MOA-seq Dynamics and Motif Enrichment
 
 This pipeline supports the analysis underlying Figure 8, which investigates HIF1A occupancy across MOA-seq-defined dynamic peaks, separating gain and loss regions and comparing HIF1A motif enrichment across clusters and timepoints.
 
@@ -61,7 +61,7 @@ bedtools intersect -u -a all_loss_diff_merged_hif1a_chip.bed -b nonhif1_clusters
 
 ---
 
-## 🧬 Panel C–D: Motif Enrichment and Random Background Comparison
+## Motif Enrichment and Random Background Comparison
 
 ### Merge HIF1A motifs from GAIN and LOSS
 ```bash
