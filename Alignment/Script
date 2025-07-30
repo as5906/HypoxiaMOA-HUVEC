@@ -1,0 +1,103 @@
+#!/bin/bash
+
+wget https://hgdownload.soe.ucsc.edu/goldenpath/hg38/bigZips/hg38.fa.gz
+bwa-mem2 index -p index hg38.fa.gz
+
+# Define path to reference genome and index
+genome=hg38.fa.gz
+index=index
+
+cd 0h/Rep1
+#Path to paired-end FASTQs available on SRA
+Pair1=Va_MOA0_CKDL190142987-1a-AK4986-AK7214_H3V3YCCX2_L5_1.fq.gz 
+Pair2=Va_MOA0_CKDL190142987-1a-AK4986-AK7214_H3V3YCCX2_L5_2.fq.gz 
+MOAseq.GeneralPipeline.Linux.CPM.sh -a $Pair1 -b $Pair2 -c $genome -d $index -f 20
+cd ..
+cd Rep2
+Pair1=Vb_MOA0_CKDL190142987-1a-D712-AK1681_H3V3YCCX2_L5_1.fq.gz
+Pair2=Vb_MOA0_CKDL190142987-1a-D712-AK1681_H3V3YCCX2_L5_2.fq.gz
+MOAseq.GeneralPipeline.Linux.CPM.sh -a $Pair1 -b $Pair2 -c $genome -d $index -f 20
+cd ..
+cd ..
+
+cd 1h/Rep1
+Pair1=Va_MOA1_CKDL190142987-1a-AK4986-AK7215_H3V3YCCX2_L5_1.fq.gz
+Pair2=Va_MOA1_CKDL190142987-1a-AK4986-AK7215_H3V3YCCX2_L5_2.fq.gz
+MOAseq.GeneralPipeline.Linux.CPM.sh -a $Pair1 -b $Pair2 -c $genome -d $index -f 20
+cd ..
+cd Rep2
+Pair1=Vb_MOA1_CKDL190142987-1a-GB01-AK1682_H3V3YCCX2_L5_1.fq.gz 
+Pair2=Vb_MOA1_CKDL190142987-1a-GB01-AK1682_H3V3YCCX2_L5_2.fq.gz 
+MOAseq.GeneralPipeline.Linux.CPM.sh -a $Pair1 -b $Pair2 -c $genome -d $index -f 20
+cd ..
+cd ..
+
+cd 3h/Rep1
+Pair1=Va_MOA3_CKDL190142987-1a-AK4986-AK7216_H3V3YCCX2_L5_1.fq.gz
+Pair2=Va_MOA3_CKDL190142987-1a-AK4986-AK7216_H3V3YCCX2_L5_2.fq.gz
+MOAseq.GeneralPipeline.Linux.CPM.sh -a $Pair1 -b $Pair2 -c $genome -d $index -f 20
+cd ..
+cd Rep2
+Pair1=Vb_MOA3_CKDL190142987-1a-GB01-AK1780_H3V3YCCX2_L5_1.fq.gz
+Pair2=Vb_MOA3_CKDL190142987-1a-GB01-AK1780_H3V3YCCX2_L5_2.fq.gz 
+MOAseq.GeneralPipeline.Linux.CPM.sh -a $Pair1 -b $Pair2 -c $genome -d $index -f 20
+cd ..
+cd ..
+
+cd 24h/Rep1
+Pair1=Va_MOA24_CKDL190142987-1a-GB01-AK1680_H3V3YCCX2_L5_1.fq.gz
+Pair2=Va_MOA24_CKDL190142987-1a-GB01-AK1680_H3V3YCCX2_L5_2.fq.gz
+MOAseq.GeneralPipeline.Linux.CPM.sh -a $Pair1 -b $Pair2 -c $genome -d $index -f 20
+cd ..
+cd Rep2
+Pair1=Vb_MOA24_CKDL190142987-1a-D701-AK7211_H3V3YCCX2_L5_1.fq.gz
+Pair2=Vb_MOA24_CKDL190142987-1a-D701-AK7211_H3V3YCCX2_L5_2.fq.gz
+MOAseq.GeneralPipeline.Linux.CPM.sh -a $Pair1 -b $Pair2 -c $genome -d $index -f 20
+cd ..
+cd ..
+
+cd Control_1/Rep1
+Pair1=ZSG06_S5_L001_R1_001.fastq.gz
+Pair2=ZSG06_S5_L001_R2_001.fastq.gz
+MOAseq.GeneralPipeline.Linux.CPM.sh -a $Pair1 -b $Pair2 -c $genome -d $index -f 20
+cd ..
+cd Rep2
+Pair1=ZSG06_S5_L002_R1_001.fastq.gz
+Pair2=ZSG06_S5_L002_R2_001.fastq.gz 
+MOAseq.GeneralPipeline.Linux.CPM.sh -a $Pair1 -b $Pair2 -c $genome -d $index -f 20
+cd ..
+cd ..
+
+cd Control_2/Rep1
+Pair1=ZSG07_S6_L001_R1_001.fastq.gz 
+Pair2=ZSG07_S6_L001_R2_001.fastq.gz
+MOAseq.GeneralPipeline.Linux.CPM.sh -a $Pair1 -b $Pair2 -c $genome -d $index -f 20
+cd ..
+cd Rep2
+Pair1=ZSG07_S6_L002_R1_001.fastq.gz
+Pair2=ZSG07_S6_L002_R2_001.fastq.gz 
+MOAseq.GeneralPipeline.Linux.CPM.sh -a $Pair1 -b $Pair2 -c $genome -d $index -f 20
+cd ..
+cd ..
+
+cd Control_3/Rep1
+Pair1=ZSG08_S7_L001_R1_001.fastq.gz 
+Pair2=ZSG08_S7_L001_R2_001.fastq.gz
+MOAseq.GeneralPipeline.Linux.CPM.sh -a $Pair1 -b $Pair2 -c $genome -d $index -f 20
+cd ..
+cd Rep2
+Pair1=ZSG08_S7_L002_R1_001.fastq.gz
+Pair2=ZSG08_S7_L002_R2_001.fastq.gz
+MOAseq.GeneralPipeline.Linux.CPM.sh -a $Pair1 -b $Pair2 -c $genome -d $index -f 20
+cd ..
+cd ..
+
+cd Control_4/Rep1
+Pair1=ZSG09_S8_L001_R1_001.fastq.gz 
+Pair2=ZSG09_S8_L001_R2_001.fastq.gz
+MOAseq.GeneralPipeline.Linux.CPM.sh -a $Pair1 -b $Pair2 -c $genome -d $index -f 20
+cd ..
+cd Rep2
+Pair1=ZSG09_S8_L002_R1_001.fastq.gz 
+Pair2=ZSG09_S8_L002_R2_001.fastq.gz
+MOAseq.GeneralPipeline.Linux.CPM.sh -a $Pair1 -b $Pair2 -c $genome -d $index -f 20
