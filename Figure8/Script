@@ -1,0 +1,162 @@
+#!/bin/bash
+
+###Figure8A and Figure8B
+
+#Merge all GAIN diff-MOA
+cat MOA1_gain_diff.bed MOA3_gain_diff.bed MOA24_gain_diff.bed > temp
+bedtools sort -i temp > temp2
+bedtools merge -i temp2 > all_gain_diff_merged.bed
+
+#Intersect with HIF1A ChIP
+bedtools intersect -u -a all_gain_diff_merged.bed -b remap2022_HIF1A_nr_macs2_hg38_v1_0.bed >  all_gain_diff_merged_hif1a_chip.bed #439
+wc -l all_gain_diff_merged_hif1a_chip.bed
+#Intersect with ChIP overlapping diff-MOA GAIN peaks in hmc2,3,4,5,9 - hif1_clusters
+bedtools intersect -u -a all_gain_diff_merged_hif1a_chip.bed -b hif1_clusters > m #438
+wc -l m
+#Intersect with ChIP overlapping diff-MOA GAIN peaks in hmc1,6,7,8,10 - nonhif1_clusters
+bedtools intersect -u -a all_gain_diff_merged_hif1a_chip.bed -b nonhif1_clusters > m #1
+wc -l m
+
+#Merge all LOSS diff-MOA
+cat MOA1_loss_diff.bed MOA3_loss_diff.bed MOA24_loss_diff.bed > temp
+bedtools sort -i temp > temp2
+bedtools merge -i temp2 > all_loss_diff_merged.bed
+
+#Intersect with HIF1A ChIP
+bedtools intersect -u -a all_loss_diff_merged.bed -b ~/HYPOX/HIF/HIF/remap2022_HIF1A_nr_macs2_hg38_v1_0.bed >  all_loss_diff_merged_hif1a_chip.bed #197
+wc -l all_loss_diff_merged_hif1a_chip.bed
+#Intersect with ChIP overlapping diff-MOA LOSS peaks in hmc2,3,4,5,9 - hif1_clusters
+bedtools intersect -u -a all_loss_diff_merged_hif1a_chip.bed -b /home/ss19m/REVISIONS/hif2a/Cluster_files/hif1_clusters > m #0
+wc -l m
+#Intersect with ChIP overlapping diff-MOA LOSS peaks in hmc1,6,7,8,10 - nonhif1_clusters
+bedtools intersect -u -a all_loss_diff_merged_hif1a_chip.bed -b /home/ss19m/REVISIONS/hif2a/Cluster_files/nonhif_clusters > m #197
+wc -l m
+
+#Merge all HIF1A motifs from GAIN diff-MOA
+cat 1h_gain_sites.tsv.HIF 3h_gain_sites.tsv.HIF 24h_gain_sites.tsv.HIF > temp
+bedtools sort -i temp > temp2
+bedtools merge -i temp2 > hif_motifs_gain_merged.bed
+
+#Merge all HIF1A motifs from LOSS diff-MOA
+cat 1h_loss_sites.tsv.HIF 3h_loss_sites.tsv.HIF 24h_loss_sites.tsv.HIF > temp
+bedtools sort -i temp > temp2
+bedtools merge -i temp2 > hif_motifs_loss_merged.bed
+
+rm temp temp2 
+
+#Frequency of how many diff-MOA intersecting HIF1A ChIP have HIF1A motif
+bedtools intersect -u -a all_loss_diff_merged_hif1a_chip.bed -b hif_motifs_loss_merged.bed > temp #29
+bedtools intersect -u -a all_gain_diff_merged_hif1a_chip.bed -b hif_motifs_gain_merged.bed > temp #173
+
+## Randomly subsample diff-MOA gain peaks and determine how many have HIF1A motifs 100x times and compare motif occurence in GAIN diff-MOA that overlapped HIF1A ChIP
+#Determines if ChIP diff-MOA is associated with motif or similar to any diff-MOA peak (random i.e. no ChIP validation)
+# Initialize variables
+output_file="line_counts.txt"
+total_lines=0
+line_counts=()
+
+# Loop 100 times
+for ((i=1; i<=100; i++))
+do
+    # Randomly extract 438 lines from all_gain_diff_merged.bed
+    shuf -n 438 all_gain_diff_merged.bed > temp
+
+    # Perform the intersection with hif_motifs_gains_merged.bed
+    bedtools intersect -u -a temp -b hif_motifs_gains_merged.bed > temp2
+
+    # Get line count of temp2
+    line_count=$(wc -l < temp2)
+
+    # Output line count to file
+    echo "$line_count" >> "$output_file"
+
+    # Add to total for average calculation
+    ((total_lines += line_count))
+
+    # Store the line count for standard deviation calculation
+    line_counts+=($line_count)
+done
+
+# Calculate average line count
+average_lines=$((total_lines / 100))
+
+# Calculate the standard deviation
+sum_squared_diff=0
+for count in "${line_counts[@]}"; do
+    diff=$((count - average_lines))
+    squared_diff=$((diff * diff))
+    sum_squared_diff=$((sum_squared_diff + squared_diff))
+done
+stdev=$(echo "scale=2; sqrt($sum_squared_diff / 100)" | bc)
+
+# Calculate z-score for observed line count of 172
+observed_line_count=172
+z_score=$(echo "scale=2; ($observed_line_count - $average_lines) / $stdev" | bc)
+
+# Output the results
+echo "Average line count: $average_lines"
+echo "Standard deviation: $stdev"
+echo "Z-score for observed line count of 172: $z_score"
+
+
+## Do the same of LOSS diff-MOA peaks
+# Initialize variables
+output_file="line_counts2.txt"
+total_lines=0
+line_counts=()
+
+# Loop 100 times
+for ((i=1; i<=100; i++))
+do
+    # Randomly extract 197 lines from all_gain_diff_merged.bed
+    shuf -n 197 all_loss_diff_merged.bed > temp
+
+    # Perform the intersection with hif_motifs_gains_merged.bed
+    bedtools intersect -u -a temp -b hif_motifs_loss_merged.bed > temp2
+
+    # Get line count of temp2
+    line_count=$(wc -l < temp2)
+
+    # Output line count to file
+    echo "$line_count" >> "$output_file"
+
+    # Add to total for average calculation
+    ((total_lines += line_count))
+
+    # Store the line count for standard deviation calculation
+    line_counts+=($line_count)
+done
+
+# Calculate average line count
+average_lines=$((total_lines / 100))
+
+# Calculate the standard deviation
+sum_squared_diff=0
+for count in "${line_counts[@]}"; do
+    diff=$((count - average_lines))
+    squared_diff=$((diff * diff))
+    sum_squared_diff=$((sum_squared_diff + squared_diff))
+done
+stdev=$(echo "scale=2; sqrt($sum_squared_diff / 100)" | bc)
+
+# Calculate z-score for observed line count of 29
+observed_line_count=29
+z_score=$(echo "scale=2; ($observed_line_count - $average_lines) / $stdev" | bc)
+
+# Output the results
+echo "Average line count: $average_lines"
+echo "Standard deviation: $stdev"
+echo "Z-score for observed line count of 29: $z_score"
+
+
+###Figure8E
+#101 HIF1A BP co occur motifs analysis
+bedtools intersect -u -b hif_motifs_gains_merged.bed -a hif1_clusters > temp
+
+#Output file used for motif enrichment in MEME suite
+awk '{midpoint=int(($2+$3)/2); start=midpoint-50; end=midpoint+50; print $1 "\t" start "\t" end}' temp > hif1_clusters_hif1a_motif_101.bed
+
+bedtools intersect -u -b hif_motifs_loss_merged.bed -a nonhif1_clusters > temp
+
+#Output file used for motif enrichment in MEME suite
+awk '{midpoint=int(($2+$3)/2); start=midpoint-50; end=midpoint+50; print $1 "\t" start "\t" end}' temp > nonhif1_clusters_hif1a_motif_101.bed
