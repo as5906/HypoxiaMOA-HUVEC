@@ -1,0 +1,163 @@
+#!/bin/bash
+
+#Define required file paths
+frenter_bedfile_0h=~/HITM/BEDS/MERGE/MOA0_merge_frenter_q20_chr_sort.bed
+frenter_bigwigfile_0h=~/HITM/Hypoxia/Files/MAPQ20/c21/merge/bgs/chr/MOA0_merge_frenter_q20_arcdn.bw
+python_script=~/Cov_avg.py
+bwa2_index=~/genomes/human/TEST2/bwa2_index_hg38
+
+
+###Figure3A and Figure3B
+wget https://remap.univ-amu.fr/storage/remap2022/hg38/MACS2/BIOTYPE/HUVEC-C/remap2022_HUVEC-C_nr_macs2_hg38_v1_0.bed.gz
+gzip -d remap2022_HUVEC-C_nr_macs2_hg38_v1_0.bed.gz
+
+awk '{OFS="\t" ; print $1,$7,$8}' remap2022_HUVEC-C_nr_macs2_hg38_v1_0.bed > remap2022_HUVEC-C_nr_summits.bed
+
+bedtools intersect -u -a remap2022_HUVEC-C_nr_summits.bed -b "$frenter_bedfile_0h" > remap2022_HUVEC-C_nr_summits_with0hrData.bed 
+
+computeMatrix reference-point --referencePoint center -a 250 -b 250 --skipZeros --missingDataAsZero -R remap2022_HUVEC-C_nr_summits_with0hrData.bed -S "$frenter_bigwigfile_0h"  -o 0hr_matrix.gz
+
+plotHeatmap -m 0hr_matrix.gz -x "Distance from HUVEC ChIP Peak Summit (Kb)" --regionsLabel "Peaks" --samplesLabel "MOA 0 Hour" --refPointLabel "Summit" -out heat.png --heatmapHeight 25 --heatmapWidth 3 --sortUsing max --colorList white,purple
+
+
+###Figure3C and FigureS2
+awk 'BEGIN {OFS="\t"} {split($4, arr, ":"); $4 = arr[1]; print $1, $7, $8, $4}' remap2022_HUVEC-C_nr_macs2_hg38_v1_0.bed > remap2022_HUVEC-C_nr_summit_4col.bed
+
+# List of directories to create
+directories=("BMPR1A" "BRD2" "BRD4" "EPAS1" "ERG" "ETS1" "FLI1" "JUN" "MEF2C" "PROX1" "RAD21" "RELA" "TFEB")
+
+# Loop through each directory and execute the commands
+for dir in "${directories[@]}"; do
+    # Filter the file based on the 4th column matching the directory name (TF name)
+    awk -v dir="$dir" 'BEGIN {OFS="\t"} $4 ~ dir {print $1, $2, $3, $4}' remap2022_HUVEC-C_nr_summit_4col.bed > "${dir}.bed"
+
+    # Create the directory
+    mkdir -p "$dir"            
+
+    # Move the filtered file into the directory
+    mv "${dir}.bed" "$dir"
+
+    # Enter the directory
+    cd "$dir"                  
+
+    # Execute the Python command
+    python "$python_script" "$frenter_bedfile_0h" "$dir.bed" 1000 False  
+
+    # Go back to the parent directory
+    cd ..                      
+done
+
+###Figure3D and Figure3E
+# Create a directory structure for ChIP and its subdirectories
+cd ChIP
+
+# Navigate into the FLI1 directory to perform the analysis
+cd FLI1_chip
+
+# Step 1: Download filtered and clipped FASTQ for SRR6511179
+# You can download the FASTQ file from the provided link:
+# Download FASTQ from: https://trace.ncbi.nlm.nih.gov/Traces/?view=run_browser&acc=SRR6511187&display=download
+
+# Step 2: Align the FASTQ file with bwa-mem2
+bwa-mem2 mem \
+    -v 1 -M -t 40 \
+    "$bwa2_index" \
+    SRR6511187.fastq.gz > out.sam
+
+# Step 3: Convert the SAM file to BAM format, sort, and apply quality filtering
+samtools view \
+    out.sam \
+    -b \
+    -q 20 \
+    -@ 2 | samtools sort \
+    -@ 2 \
+    -m 10G \
+    -o out.sort.bam
+
+# Step 4: Convert the BAM file to BED format using bedtools
+bedtools bamtobed -i out.sort.bam > out.bed
+
+#Python script to produce coverage plot and to determine summit position - Done for both ChIP and MOA data
+python "$python_script" out.bed FLI1_motif_sites.bed 1000 False
+cd ..
+cd FLI1_moa
+python "$python_script" "$frenter_bedfile_0h" FLI1_motif_sites.bed 1000 False
+cd ..
+
+cd ERG_chip
+
+# Download FASTQ from: https://trace.ncbi.nlm.nih.gov/Traces/?view=run_browser&acc=SRR6511183&display=download
+
+bwa-mem2 mem \
+    -v 1 -M -t 40 \
+    "$bwa2_index" \
+    SRR6511183.fastq.gz > out.sam
+
+samtools view \
+    out.sam \
+    -b \
+    -q 20 \
+    -@ 2 | samtools sort \
+    -@ 2 \
+    -m 10G \
+    -o out.sort.bam
+
+bedtools bamtobed -i out.sort.bam > out.bed
+
+python "$python_script" out.bed ERG_motif_sites.bed 1000 False
+cd ..
+cd ERG_moa
+python "$python_script" "$frenter_bedfile_0h" ERG_motif_sites.bed 1000 False
+cd ..
+
+cd ETS1_chip
+
+# Download FASTQ from: https://trace.ncbi.nlm.nih.gov/Traces/?view=run_browser&acc=SRR6511179&display=download
+
+bwa-mem2 mem \
+    -v 1 -M -t 40 \
+    "$bwa2_index" \
+     SRR6511179.fastq.gz > out.sam
+
+samtools view \
+    out.sam \
+    -b \
+    -q 20 \
+    -@ 2 | samtools sort \
+    -@ 2 \
+    -m 10G \
+    -o out.sort.bam
+
+bedtools bamtobed -i out.sort.bam > out.bed
+
+python "$python_script" out.bed ETS1_motif_sites.bed 1000 False
+cd ..
+cd ETS1_moa
+python "$python_script" "$frenter_bedfile_0h" ETS1_motif_sites.bed 1000 False
+cd ..
+
+cd JUN_chip
+
+# Download FASTQ from: https://trace.ncbi.nlm.nih.gov/Traces/?view=run_browser&acc=SRR6511191&display=download
+
+bwa-mem2 mem \
+    -v 1 -M -t 40 \
+    "$bwa2_index" \
+    SRR6511191.fastq.gz > out.sam
+
+samtools view \
+    out.sam \
+    -b \
+    -q 20 \
+    -@ 2 | samtools sort \
+    -@ 2 \
+    -m 10G \
+    -o out.sort.bam
+
+bedtools bamtobed -i out.sort.bam > out.bed
+
+python "$python_script" out.bed JUN_motif_sites.bed 1000 False
+cd ..
+cd JUN_moa
+python "$python_script" "$frenter_bedfile_0h" JUN_motif_sites.bed 1000 False
+cd ..
