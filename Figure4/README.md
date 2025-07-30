@@ -88,5 +88,3 @@ plotHeatmap -m 3hr_matrix.gz --sortRegions no --colorMap Blues Greys \
 
 - `AlldiffMOA_ccre_GENES.bed` and `AlldiffMOA_nonccre_GENES.bed` can be submitted to:
   - [ENRICHR](https://maayanlab.cloud/Enrichr/)
-  - [GSEA](https://www.gsea-msigdb.org/gsea/index.jsp)
-- Figures 4 and S3 are generated as `.svg` files, suitable for publication.
