@@ -1,0 +1,251 @@
+#!/bin/bash
+
+#Define required file paths
+raw_bedfile_0h=~/HITM/BEDS/RAW/MOA0_q20_chr_sort.bed
+python_script=~/Cov_avg.py
+frenter_bedfile_0h=~/HITM/BEDS/MERGE/MOA0_merge_frenter_q20_chr_sort.bed
+
+#Download GSE289863_0h_hpx_idr_allReps.narrowPeak.gz from https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE289863
+FILE_PATH="GSE289863_0h_hpx_idr_allReps.narrowPeak.gz"
+
+###Figure2A and Figure2B
+#mRNA expression quartiles determined by merging expression data from ENCFF892OHT (https://www.encodeproject.org/experiments/ENCSR429EGC/) with genomic coordinates of genes from gencode.v29.basic.annotation.gff3. Genes ranked by expression and split into 4 files - xaa, xab, xac, and xad correspoding to the expression quartiles.
+
+cd TSS_Q1
+python "$python_script" "$raw_bedfile_0h" xaa 1000 True
+cd ..
+
+cd TSS_Q2
+python "$python_script" "$raw_bedfile_0h" xab 1000 True
+cd ..
+
+cd TSS_Q3
+python "$python_script" "$raw_bedfile_0h" xac 1000 True
+cd ..
+
+cd TSS_Q4
+python "$python_script" "$raw_bedfile_0h" xad 1000 True
+cd ..
+
+###Figure2C
+wget https://hgdownload.soe.ucsc.edu/gbdb/hg38/encode3/ccre/encodeCcreCombined.bb
+
+#Utility can be found here - https://hgdownload.soe.ucsc.edu/admin/exe/
+bigBedToBed encodeCcreCombined.bb encodeCcreCombined.bed
+
+awk '{OFS="\t" ; if($4=="dELS") print $1,$2,$3,"dELS"}' encodeCcreCombined.bed > encodeCcre_dELS.bed
+mv encodeCcre_dELS.bed dELS
+awk '{OFS="\t" ; if($4=="pELS") print $1,$2,$3,"pELS"}' encodeCcreCombined.bed > encodeCcre_pELS.bed
+mv encodeCcre_pELS.bed pELS
+awk '{OFS="\t" ; if($4=="PLS") print $1,$2,$3,"PLS"}' encodeCcreCombined.bed > encodeCcre_PLS.bed
+mv encodeCcre_PLS.bed PLS
+awk '{OFS="\t" ; if($4=="CTCF-only") print $1,$2,$3,"CTCF"}' encodeCcreCombined.bed > encodeCcre_CTCF.bed
+mv encodeCcre_CTCF.bed CTCF
+awk '{OFS="\t" ; if($4=="DNase-H3K4me3") print $1,$2,$3,"K4m3"}' encodeCcreCombined.bed > encodeCcre_K4m3.bed
+mv encodeCcre_K4m3.bed K4m3
+
+cd dELS
+python "$python_script" "$frenter_bedfile_0h" encodeCcre_dELS.bed 1000 False
+cd ..
+
+cd pELS
+python "$python_script" "$frenter_bedfile_0h" encodeCcre_pELS.bed 1000 False
+cd ..
+
+cd CTCF
+python "$python_script" "$frenter_bedfile_0h" encodeCcre_CTCF.bed 1000 False
+cd ..
+
+cd K4m3
+python "$python_script" "$frenter_bedfile_0h" encodeCcre_K4m3.bed 1000 False
+cd ..
+
+###Figure2D
+
+# Decompress the file
+gzip -d "$FILE_PATH"
+FILE_PATH="${FILE_PATH%.gz}"
+
+# Run bedtools intersect for different cCRE datasets and then calculate z-score based on intersections from shuffled peak set
+
+#dELS
+bedtools intersect -a "$FILE_PATH" -b encodeCcre_dELS.bed > 0hr_idr_dELSbp.bed
+awk '{print $3-$2}' 0hr_idr_dELSbp.bed > temp
+observed=$(awk -F',' '{sum+=$1;} END{print sum;}' temp)
+for n in {1..100}
+do
+        bedtools shuffle -i "$FILE_PATH" -g hg38.chrom.sizes > temp
+        bedtools intersect -a temp -b encodeCcre_dELS.bed > temp2
+        awk '{print $3-$2}' temp2 > temp3
+        num=$(awk -F',' '{sum+=$1;} END{print sum;}' temp3)
+        echo $num >> 0hr_dELS.probDIST
+done
+rm temp temp2 temp3
+python dist.py 0hr_dELS.probDIST 0h dELS $observed
+
+#pELS
+bedtools intersect -a "$FILE_PATH" -b encodeCcre_dELS.bed > 0hr_idr_pELSbp.bed
+awk '{print $3-$2}' 0hr_idr_pELSbp.bed > temp
+observed=$(awk -F',' '{sum+=$1;} END{print sum;}' temp)
+for n in {1..100}
+do
+        bedtools shuffle -i "$FILE_PATH" -g hg38.chrom.sizes > temp
+        bedtools intersect -a temp -b encodeCcre_pELS.bed > temp2
+        awk '{print $3-$2}' temp2 > temp3
+        num=$(awk -F',' '{sum+=$1;} END{print sum;}' temp3)
+        echo $num >> 0hr_pELS.probDIST
+done
+rm temp temp2 temp3
+python dist.py 0hr_pELS.probDIST 0h pELS $observed
+
+#PLS
+bedtools intersect -a "$FILE_PATH" -b encodeCcre_PLS.bed > 0hr_idr_PLSbp.bed
+awk '{print $3-$2}' 0hr_idr_PLSbp.bed > temp
+observed=$(awk -F',' '{sum+=$1;} END{print sum;}' temp)
+for n in {1..100}
+do
+        bedtools shuffle -i "$FILE_PATH" -g hg38.chrom.sizes > temp
+        bedtools intersect -a temp -b encodeCcre_PLS.bed > temp2
+        awk '{print $3-$2}' temp2 > temp3
+        num=$(awk -F',' '{sum+=$1;} END{print sum;}' temp3)
+        echo $num >> 0hr_PLS.probDIST
+done
+rm temp temp2 temp3
+python dist.py 0hr_PLS.probDIST 0h PLS $observed
+
+#CTCF
+bedtools intersect -a "$FILE_PATH" -b encodeCcre_CTCF.bed > 0hr_idr_CTCFbp.bed
+awk '{print $3-$2}' 0hr_idr_CTCFbp.bed > temp
+observed=$(awk -F',' '{sum+=$1;} END{print sum;}' temp)
+for n in {1..100}
+do
+        bedtools shuffle -i "$FILE_PATH" -g hg38.chrom.sizes > temp
+        bedtools intersect -a temp -b encodeCcre_CTCF.bed > temp2
+        awk '{print $3-$2}' temp2 > temp3
+        num=$(awk -F',' '{sum+=$1;} END{print sum;}' temp3)
+        echo $num >> 0hr_CTCF.probDIST
+done
+rm temp temp2 temp3
+python dist.py 0hr_CTCF.probDIST 0h CTCF $observed
+
+#K4m3
+bedtools intersect -a "$FILE_PATH" -b encodeCcre_K4m3.bed > 0hr_idr_K4m3bp.bed
+awk '{print $3-$2}' 0hr_idr_K4m3bp.bed > temp
+observed=$(awk -F',' '{sum+=$1;} END{print sum;}' temp)
+for n in {1..100}
+do
+        bedtools shuffle -i "$FILE_PATH" -g hg38.chrom.sizes > temp
+        bedtools intersect -a temp -b encodeCcre_K4m3.bed > temp2
+        awk '{print $3-$2}' temp2 > temp3
+        num=$(awk -F',' '{sum+=$1;} END{print sum;}' temp3)
+        echo $num >> 0hr_K4m3.probDIST
+done
+rm temp temp2 temp3
+python dist.py 0hr_K4m3.probDIST 0h K4m3 $observed
+
+###Figure2E
+#Run bedtools intersect for different DNAse1 datasets and then calculate z-score based on intersections from shuffled peak set
+
+#HUVEC
+bedtools intersect -a "$FILE_PATH" -b UCSC_ENCODE_HUVEC_PEAKS.bed > 0hr_idr_HUVECbp.bed
+awk '{print $3-$2}' 0hr_idr_HUVECbp.bed > temp
+observed=$(awk -F',' '{sum+=$1;} END{print sum;}' temp)
+for n in {1..100}
+do
+        bedtools shuffle -i "$FILE_PATH" -g hg38.chrom.sizes > temp
+        bedtools intersect -a temp -b UCSC_ENCODE_HUVEC_PEAKS.bed > temp2
+        awk '{print $3-$2}' temp2 > temp3
+        num=$(awk -F',' '{sum+=$1;} END{print sum;}' temp3)
+        echo $num >> 0hr_HUVEC.probDIST
+done
+rm temp temp2 temp3
+python dist.py 0hr_HUVEC.probDIST 0h HUVEC $observed
+
+#GM12878
+bedtools intersect -a "$FILE_PATH" -b UCSC_ENCODE_GM12878_PEAKS.bed > 0hr_idr_GM12878bp.bed
+awk '{print $3-$2}' 0hr_idr_GM12878bp.bed > temp
+observed=$(awk -F',' '{sum+=$1;} END{print sum;}' temp)
+for n in {1..100}
+do
+        bedtools shuffle -i "$FILE_PATH" -g hg38.chrom.sizes > temp
+        bedtools intersect -a temp -b UCSC_ENCODE_GM12878_PEAKS.bed > temp2
+        awk '{print $3-$2}' temp2 > temp3
+        num=$(awk -F',' '{sum+=$1;} END{print sum;}' temp3)
+        echo $num >> 0hr_GM12878.probDIST
+done
+rm temp temp2 temp3
+python dist.py 0hr_GM12878.probDIST 0h GM12878 $observed
+
+#NHEK
+bedtools intersect -a "$FILE_PATH" -b UCSC_ENCODE_NHEK_PEAKS.bed > 0hr_idr_NHEKbp.bed
+awk '{print $3-$2}' 0hr_idr_NHEKbp.bed > temp
+observed=$(awk -F',' '{sum+=$1;} END{print sum;}' temp)
+for n in {1..100}
+do
+        bedtools shuffle -i "$FILE_PATH" -g hg38.chrom.sizes > temp
+        bedtools intersect -a temp -b UCSC_ENCODE_NHEK_PEAKS.bed > temp2
+        awk '{print $3-$2}' temp2 > temp3
+        num=$(awk -F',' '{sum+=$1;} END{print sum;}' temp3)
+        echo $num >> 0hr_NHEK.probDIST
+done
+rm temp temp2 temp3
+python dist.py 0hr_NHEK.probDIST 0h NHEK $observed
+
+#HepG2
+bedtools intersect -a "$FILE_PATH" -b UCSC_ENCODE_HepG2_PEAKS.bed > 0hr_idr_HepG2bp.bed
+awk '{print $3-$2}' 0hr_idr_HepG2bp.bed > temp
+observed=$(awk -F',' '{sum+=$1;} END{print sum;}' temp)
+for n in {1..100}
+do
+        bedtools shuffle -i "$FILE_PATH" -g hg38.chrom.sizes > temp
+        bedtools intersect -a temp -b UCSC_ENCODE_HepG2_PEAKS.bed > temp2
+        awk '{print $3-$2}' temp2 > temp3
+        num=$(awk -F',' '{sum+=$1;} END{print sum;}' temp3)
+        echo $num >> 0hr_HepG2.probDIST
+done
+rm temp temp2 temp3
+python dist.py 0hr_HepG2.probDIST 0h HepG2 $observed
+
+#K562
+bedtools intersect -a "$FILE_PATH" -b UCSC_ENCODE_K562_PEAKS.bed > 0hr_idr_K562bp.bed
+awk '{print $3-$2}' 0hr_idr_K562bp.bed > temp
+observed=$(awk -F',' '{sum+=$1;} END{print sum;}' temp)
+for n in {1..100}
+do
+        bedtools shuffle -i "$FILE_PATH" -g hg38.chrom.sizes > temp
+        bedtools intersect -a temp -b UCSC_ENCODE_K562_PEAKS.bed > temp2
+        awk '{print $3-$2}' temp2 > temp3
+        num=$(awk -F',' '{sum+=$1;} END{print sum;}' temp3)
+        echo $num >> 0hr_K562.probDIST
+done
+rm temp temp2 temp3
+python dist.py 0hr_K562.probDIST 0h K562 $observed
+
+#NHLF
+bedtools intersect -a "$FILE_PATH" -b UCSC_ENCODE_NHLF_PEAKS.bed > 0hr_idr_NHLFbp.bed
+awk '{print $3-$2}' 0hr_idr_NHLFbp.bed > temp
+observed=$(awk -F',' '{sum+=$1;} END{print sum;}' temp)
+for n in {1..100}
+do
+        bedtools shuffle -i "$FILE_PATH" -g hg38.chrom.sizes > temp
+        bedtools intersect -a temp -b UCSC_ENCODE_NHLF_PEAKS.bed > temp2
+        awk '{print $3-$2}' temp2 > temp3
+        num=$(awk -F',' '{sum+=$1;} END{print sum;}' temp3)
+        echo $num >> 0hr_NHLF.probDIST
+done
+rm temp temp2 temp3
+python dist.py 0hr_NHLF.probDIST 0h NHLF $observed
+
+
+###Figure2F
+#Intersect 0hr with HUVEC DNAse1 to determine peaks in these regions
+bedtools intersect -u -a "$FILE_PATH" -b UCSC_ENCODE_HUVEC_PEAKS.bed > 0hr_idr_HUVECpeak.bed
+#Of the regions in HUVEC DNAse1, how many of these peaks are in cCREs or are not in cCREs
+bedtools intersect -u -a 0hr_idr_HUVECpeak.bed -b encodeCcreCombined.bed > 0hr_idr_HUVECpeak_cCRE.bed
+bedtools intersect -v -a 0hr_idr_HUVECpeak.bed -b encodeCcreCombined.bed > 0hr_idr_HUVECpeak_NOcCRE.bed
+
+#Intersect 0hr with HUVEC DNAse1 to determine number of peaks that are not in these regions
+bedtools intersect -v -a "$FILE_PATH" -b UCSC_ENCODE_HUVEC_PEAKS.bed > 0hr_idr_NO_HUVECpeak.bed
+#Of the regions not in HUVEC DNAse1, how many of these peaks are in cCREs or are not in cCREs
+bedtools intersect -u -a 0hr_idr_NO_HUVECpeak.bed -b encodeCcreCombined.bed > 0hr_idr_NO_HUVECpeak_cCRE.bed
+bedtools intersect -v -a 0hr_idr_NO_HUVECpeak.bed -b encodeCcreCombined.bed > 0hr_idr_NO_HUVECpeak_NOcCRE.bed
