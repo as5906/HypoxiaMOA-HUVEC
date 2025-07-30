@@ -3,7 +3,7 @@
 ## Overview
 
 This directory contains peak files and scripts used to analyze the overlap between differential MOA-seq peaks and ENCODE candidate cis-regulatory elements (cCREs). The goal is to quantify how many MOA-seq peaks intersect known regulatory element classes and to determine the number of overlapping base pairs and peak counts for each class.
-This directory supports Figure4D (Density calculation can be found in Supplementary Table 6), FigureS4, and FigureS5.
+This directory supports Figure4D (base pair density calculation can be found in Supplementary Table 6), FigureS4, and FigureS5.
 
 ---
 
