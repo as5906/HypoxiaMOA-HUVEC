@@ -1,5 +1,6 @@
 #!/bin/bash
 
+mkdir 1h 3h 24h
 #Define required file paths
 Bed_0h=~/HITM/BEDS/MERGE/MOA0_merge_frenter_q20_chr_sort.bed
 Bed_1h=~/HITM/BEDS/MERGE/MOA1_merge_frenter_q20_chr_sort.bed
